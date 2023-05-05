@@ -10,20 +10,14 @@ clc; clear;
 % n-state quantum system
 n = 3;
 
-% states
-syms p1 p2 p3;
-
+% States
 psi = sym('p%d',[1,n]).'
 syms(['pf(t)'],[n,1])
 
 
 % Hermitian matrices
-
 H0 = randomComplexHermitian(n)
 H1 = randomComplexHermitian(n)
-
-
-% Verify that H0 and H1 have shape nxn
 
 % Verify Hermiticity
 % fprintf("H0 Hermitian: %s\n",mat2str(all(all(ctranspose(H0) == H0))))
@@ -58,29 +52,28 @@ fprintf("All eigenvectors have been normalized.\n")
 a = 1/2;
 b = 1/2;
 
-% choose an eigenvector/ eigenvalue state of interest
+% Choose an eigenvector/ eigenvalue state of interest
 idx = 1;
 lambda = D(idx,idx)
 phi = V(:,idx)
 
-% fictious control
+% Fictious control
 omega = -lambda - b * imag(dot(psi, phi))
 u = -a*imag(dot(H1*psi, phi))
 
 pdot = -1i*(H0 + u*H1 + omega * eye(3)) * psi
 
-% time interval of interest
+% Time interval of interest
 tspan = [0;45];
 
-% more robust way of doing this
+% A more robust way of transforming pdot into a function.
 func = matlabFunction(pdot, "Vars", psi);
 
-% initial condition
+% Initial condition
 I00 = [0; 1/sqrt(2); 1/sqrt(2)];
 I0 = 1/norm(I00) * I00;
 
-% numerical ode solver ode15s
-% https://www.mathworks.com/matlabcentral/answers/1672109-unable-to-find-symbolic-solution-warning
+% Numerical ode solver ode15s
 [T,SOL] = ode15s(@(t,sol)func(sol(1),sol(2),sol(3)),tspan,I0);
 
 psi_1 = SOL(:,1)
@@ -88,10 +81,10 @@ psi_1 = SOL(:,1)
 % I need to compute (elemnet-wise) complex magnitude squared, kind of
 % tedious, MATLAB should have a built-in for this.
 for ii=1: length(psi_1)
-psi_1(ii)=abs(psi_1(ii))^2;
+   psi_1(ii)=abs(psi_1(ii))^2;
 end
 
-ustar = subs(u, {p1, p2,p3}, {SOL(:,1), SOL(:,2), SOL(:,3)});
+ustar = subs(u, {psi(1), psi(2),psi(3)}, {SOL(:,1), SOL(:,2), SOL(:,3)});
 plot(T,psi_1,'Color',[0.5 0.6 0],'LineWidth',2)
 hold on
 
@@ -99,7 +92,7 @@ plot(T,ustar,'--','Color',[0.5 0 0.8],'LineWidth',2)
 hold on
 
 % not shown in actual paper (convergence of fictious control)
-omegastar = subs(omega, {p1, p2, p3}, {SOL(:,1), SOL(:,2), SOL(:,3)});
+omegastar = subs(omega, {psi(1), psi(2), psi(3)}, {SOL(:,1), SOL(:,2), SOL(:,3)});
 plot(T, omegastar,'--','Color',[0.7 0.2 0],'LineWidth',1)
 
 grid on
@@ -107,7 +100,3 @@ legend('$|\Psi_1|^2$','u','$\omega$','Interpreter','latex')
 xlabel('Time (s)') 
 
 title(sprintf('a=%.1f, b=%.1f',a,b))
-
-
-
-
